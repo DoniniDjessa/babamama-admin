@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-fira-sans: var(--font-fira-sans);
+  --font-poppins: var(--font-poppins);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 0.75rem; /* 12px - very small text */
+  line-height: 1.5;
+}
+
+/* Make all text elements smaller */
+p, span, div, a, button, input, label, select, textarea {
+  font-size: 0.75rem; /* 12px */
+}
+
+/* Smaller headings but still using Fira Sans */
+h1 {
+  font-size: 1.5rem; /* 24px */
+}
+
+h2 {
+  font-size: 1.25rem; /* 20px */
+}
+
+h3 {
+  font-size: 1.125rem; /* 18px */
+}
+
+h4 {
+  font-size: 1rem; /* 16px */
+}
+
+h5 {
+  font-size: 0.875rem; /* 14px */
+}
+
+h6 {
+  font-size: 0.75rem; /* 12px */
+}
+
+/* Titles use Fira Sans */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-fira-sans), sans-serif;
+}
+
+/* Phone Input Styles */
+.PhoneInput {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 2rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgb(226 232 240);
+  background: white;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.PhoneInput:focus-within {
+  outline: none;
+  ring: 2px;
+  ring-offset: 2px;
+  ring-color: rgb(2 6 23);
+}
+
+.PhoneInput--error {
+  border-color: rgb(239 68 68);
+}
+
+.PhoneInput--error:focus-within {
+  ring-color: rgb(239 68 68);
+}
+
+.PhoneInputInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.75rem;
+  padding: 0;
+  height: 100%;
+}
+
+.PhoneInputInput::placeholder {
+  color: rgb(100 116 139);
+}
+
+.PhoneInputCountryIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.375rem;
+}
+
+.PhoneInputCountrySelect {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.125rem;
+  margin-right: 0.375rem;
+  font-size: 0.75rem;
+  outline: none;
+}
