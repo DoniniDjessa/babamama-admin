@@ -100,6 +100,10 @@ export default function LoginPage() {
     const err = params.get("error")
     if (err === "auth_failed") {
       setError("Authentication failed. Please try again.")
+    } else if (err === "not_authorized") {
+      setError("Vous n'êtes pas autorisé à accéder à cette application. Contactez un administrateur.")
+    } else if (err === "account_inactive") {
+      setError("Votre compte est désactivé. Contactez un administrateur.")
     }
   }, [])
 
@@ -196,12 +200,6 @@ export default function LoginPage() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
 
-            <div className="text-center text-sm">
-              <span className="text-slate-600">Don't have an account? </span>
-              <Link href="/register" className="text-slate-900 font-medium hover:underline">
-                Register
-              </Link>
-            </div>
           </form>
         </CardContent>
       </Card>

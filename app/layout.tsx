@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Sans, Poppins } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "@/components/navbar";
 
 const firaSans = Fira_Sans({
   variable: "--font-fira-sans",
@@ -29,7 +30,10 @@ export default function RootLayout({
       <body
         className={`${firaSans.variable} ${poppins.variable} antialiased`}
       >
-        {children}
+        <Navbar />
+        <div className="pt-16">
+          {children}
+        </div>
       </body>
     </html>
   );

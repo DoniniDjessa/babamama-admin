@@ -11,9 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Sidebar } from "@/components/sidebar"
-import { SidebarToggle } from "@/components/sidebar-toggle"
-import { CATEGORIES, CATEGORY_KEYS, getSubcategories, type CategoryKey } from "@/lib/constants/categories"
+import { CATEGORIES, CATEGORY_KEYS, getSubcategories, getSubSubCategories, type CategoryKey } from "@/lib/constants/categories"
 import { usePriceCalculator } from "@/lib/hooks/usePriceCalculator"
 import { useSettings } from "@/lib/hooks/useSettings"
 import { ImageUpload } from "@/components/image-upload"
@@ -23,11 +21,16 @@ const productSchema = z.object({
   description: z.string().optional(),
   category: z.enum(CATEGORY_KEYS as [CategoryKey, ...CategoryKey[]]),
   subcategory: z.string().optional(),
+  subsubcategory: z.string().optional(),
   sourcing_price_yuan: z.number().min(0.01, "Le prix doit être supérieur à 0"),
   weight_kg: z.number().min(0.01, "Le poids doit être supérieur à 0"),
   stock_quantity: z.number().int().min(0, "La quantité doit être positive"),
-  is_active: z.boolean().default(true),
-  is_new: z.boolean().default(true),
+  min_quantity_to_sell: z.number().int().min(1, "La quantité minimale doit être au moins 1"),
+  compare_at_price: z.number().int().min(0).optional(), // Prix barré (pour promo classique)
+  rating: z.number().min(0).max(5).optional(),
+  specs: z.string().optional(), // Comma-separated specs string
+  is_active: z.boolean(),
+  is_new: z.boolean(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -41,7 +44,6 @@ export default function EditProductPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [images, setImages] = useState<string[]>([])
 
   const {
@@ -55,8 +57,10 @@ export default function EditProductPage() {
   })
 
   const category = watch("category")
+  const subcategory = watch("subcategory")
   const sourcingPrice = watch("sourcing_price_yuan")
   const weight = watch("weight_kg")
+  const comparePrice = watch("compare_at_price")
 
   // Calculate price in real-time
   const priceCalculation = usePriceCalculator(
@@ -64,6 +68,8 @@ export default function EditProductPage() {
     weight || null,
     settings
   )
+
+  // Note: discount_percentage is calculated automatically by the database
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -85,9 +91,14 @@ export default function EditProductPage() {
           setValue("description", data.description || "")
           setValue("category", data.category as CategoryKey)
           setValue("subcategory", data.subcategory || "")
+          setValue("subsubcategory", data.subsubcategory || "")
           setValue("sourcing_price_yuan", data.sourcing_price_yuan)
           setValue("weight_kg", data.weight_kg)
           setValue("stock_quantity", data.stock_quantity)
+          setValue("min_quantity_to_sell", data.min_quantity_to_sell || 1)
+          setValue("compare_at_price", data.compare_at_price || undefined)
+          setValue("rating", data.rating || 0)
+          setValue("specs", Array.isArray(data.specs) ? data.specs.join(", ") : (data.specs || ""))
           setValue("is_active", data.is_active)
           setValue("is_new", data.is_new)
           setImages(data.images || [])
@@ -121,12 +132,17 @@ export default function EditProductPage() {
           description: data.description || null,
           category: data.category,
           subcategory: data.subcategory || null,
+          subsubcategory: data.subsubcategory || null,
           sourcing_price_yuan: data.sourcing_price_yuan,
           weight_kg: data.weight_kg,
           final_price_xof: priceCalculation.finalPrice,
           is_active: data.is_active,
           is_new: data.is_new,
           stock_quantity: data.stock_quantity,
+          min_quantity_to_sell: data.min_quantity_to_sell,
+          compare_at_price: data.compare_at_price || null,
+          rating: data.rating || 0,
+          specs: data.specs ? data.specs.split(",").map((s) => s.trim()).filter((s) => s.length > 0) : [],
           images: images,
         })
         .eq("id", productId)
@@ -154,22 +170,17 @@ export default function EditProductPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       <div className="p-4">
         <div className="mx-auto max-w-6xl">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SidebarToggle onClick={() => setSidebarOpen(true)} />
-              <div>
-                <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
-                  Modifier le Produit
-                </h1>
-                <p className="text-slate-600 mt-0.5 text-xs">
-                  Modifiez les informations du produit
-                </p>
-              </div>
+            <div>
+              <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
+                Modifier le Produit
+              </h1>
+              <p className="text-slate-600 mt-0.5 text-xs">
+                Modifiez les informations du produit
+              </p>
             </div>
             <Link href="/products">
               <Button variant="outline" size="sm">Annuler</Button>
@@ -214,6 +225,11 @@ export default function EditProductPage() {
                       <select
                         id="category"
                         {...register("category")}
+                        onChange={(e) => {
+                          setValue("category", e.target.value as CategoryKey)
+                          setValue("subcategory", "") // Reset subcategory when category changes
+                          setValue("subsubcategory", "") // Reset subsubcategory when category changes
+                        }}
                         className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-[var(--font-poppins)]"
                       >
                         {CATEGORY_KEYS.map((key) => (
@@ -229,17 +245,45 @@ export default function EditProductPage() {
                       <select
                         id="subcategory"
                         {...register("subcategory")}
+                        onChange={(e) => {
+                          setValue("subcategory", e.target.value)
+                          setValue("subsubcategory", "") // Reset subsubcategory when subcategory changes
+                        }}
                         className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-[var(--font-poppins)]"
                       >
                         <option value="">Sélectionner...</option>
                         {getSubcategories(category).map((sub) => (
-                          <option key={sub} value={sub}>
-                            {sub}
+                          <option key={sub.name} value={sub.name}>
+                            {sub.name}
                           </option>
                         ))}
                       </select>
                     </div>
                   </div>
+
+                  {subcategory && getSubSubCategories(category, subcategory).length > 0 && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="subsubcategory">Sous-sous-catégorie</Label>
+                        <select
+                          id="subsubcategory"
+                          {...register("subsubcategory")}
+                          className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-[var(--font-poppins)]"
+                        >
+                          <option value="">Sélectionner...</option>
+                          {getSubSubCategories(category, subcategory).map((subSub) => (
+                            <optgroup key={subSub.name} label={subSub.name}>
+                              {subSub.items.map((item) => (
+                                <option key={item} value={item}>
+                                  {item}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
@@ -281,6 +325,94 @@ export default function EditProductPage() {
                       {...register("stock_quantity", { valueAsNumber: true })}
                       className={errors.stock_quantity ? "border-red-500" : ""}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="min_quantity_to_sell">Quantité minimale à vendre</Label>
+                    <Input
+                      id="min_quantity_to_sell"
+                      type="number"
+                      {...register("min_quantity_to_sell", { valueAsNumber: true })}
+                      className={errors.min_quantity_to_sell ? "border-red-500" : ""}
+                      placeholder="1"
+                    />
+                    {errors.min_quantity_to_sell && (
+                      <p className="text-xs text-red-500">{errors.min_quantity_to_sell.message}</p>
+                    )}
+                    <p className="text-xs text-slate-500">
+                      Quantité minimale que le client doit commander
+                    </p>
+                  </div>
+
+                  {/* Promo Section (Prix barré) */}
+                  <div className="space-y-4 pt-2 border-t border-slate-200">
+                    <h3 className="text-xs font-semibold text-slate-700">
+                      Promotion Classique
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Entrez un prix barré supérieur au prix final pour créer une promo automatique.
+                      Le pourcentage de réduction sera calculé automatiquement.
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="compare_at_price">Prix Barré (FCFA) - Optionnel</Label>
+                      <Input
+                        id="compare_at_price"
+                        type="number"
+                        {...register("compare_at_price", { valueAsNumber: true })}
+                        className={errors.compare_at_price ? "border-red-500" : ""}
+                        placeholder="Ex: 20000 (doit être supérieur au prix final)"
+                      />
+                      {errors.compare_at_price && (
+                        <p className="text-xs text-red-500">{errors.compare_at_price.message}</p>
+                      )}
+                      {comparePrice && priceCalculation?.finalPrice && comparePrice <= priceCalculation.finalPrice && (
+                        <p className="text-xs text-amber-600">
+                          ⚠️ Le prix barré doit être supérieur au prix final ({priceCalculation.finalPrice.toLocaleString()} FCFA)
+                        </p>
+                      )}
+                      {comparePrice && priceCalculation?.finalPrice && comparePrice > priceCalculation.finalPrice && (
+                        <p className="text-xs text-green-600">
+                          ✓ Réduction de {Math.round(((comparePrice - priceCalculation.finalPrice) / comparePrice) * 100)}% calculée automatiquement
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Rating Section */}
+                  <div className="space-y-2 pt-2 border-t border-slate-200">
+                    <Label htmlFor="rating">Note du produit (0-5 étoiles)</Label>
+                    <Input
+                      id="rating"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      {...register("rating", { valueAsNumber: true })}
+                      className={errors.rating ? "border-red-500" : ""}
+                      placeholder="0"
+                    />
+                    {errors.rating && (
+                      <p className="text-xs text-red-500">{errors.rating.message}</p>
+                    )}
+                    <p className="text-xs text-slate-500">
+                      Note sur 5 étoiles (ex: 4.5 pour 4 étoiles et demie)
+                    </p>
+                  </div>
+
+                  {/* Specs Section */}
+                  <div className="space-y-2 pt-2 border-t border-slate-200">
+                    <Label htmlFor="specs">Spécifications</Label>
+                    <textarea
+                      id="specs"
+                      {...register("specs")}
+                      rows={3}
+                      className="flex w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-[var(--font-poppins)]"
+                      placeholder="Séparez les spécifications par des virgules (ex: Écran 6.1 pouces, 128GB, Bluetooth 5.0)"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Séparez chaque spécification par une virgule (,)
+                    </p>
                   </div>
 
                   <div className="space-y-2">

@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sidebar } from "@/components/sidebar"
-import { SidebarToggle } from "@/components/sidebar-toggle"
 
 type DashboardStats = {
   pendingOrders: number
@@ -25,7 +23,6 @@ export default function DashboardPage() {
     activeProducts: 0,
     recentOrders: [],
   })
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -109,11 +106,6 @@ export default function DashboardPage() {
     }
   }, [user, supabase])
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }
 
   if (loading) {
     return (
@@ -153,26 +145,16 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       <div className="p-4">
         <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SidebarToggle onClick={() => setSidebarOpen(true)} />
-              <div>
-                <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
-                  Tableau de Bord
-          </h1>
-                <p className="text-slate-600 mt-0.5 text-xs">
-                  Bienvenue, {user?.user_metadata?.full_name || user?.email}
-          </p>
-        </div>
-            </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              Déconnexion
-            </Button>
+          <div className="mb-6">
+            <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
+              Tableau de Bord
+            </h1>
+            <p className="text-slate-600 mt-0.5 text-xs">
+              Bienvenue, {user?.user_metadata?.full_name || user?.email}
+            </p>
           </div>
 
           {/* KPI Cards */}

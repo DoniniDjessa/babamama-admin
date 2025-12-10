@@ -32,9 +32,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes (everything except login, register, and auth callbacks)
+  // Protect admin routes (everything except login and auth callbacks)
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
-                     request.nextUrl.pathname.startsWith('/register') ||
                      request.nextUrl.pathname.startsWith('/auth')
 
   if (!isAuthPage && !user) {
@@ -43,6 +42,39 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
+
+  // Check if user is in ali-users (admin app users only)
+  // TEMPORARILY DISABLED to prevent redirect loops during migration
+  // Re-enable after running migration 004 and 005
+  // 
+  // if (!isAuthPage && user) {
+  //   try {
+  //     const { data: adminUser, error: userError } = await supabase
+  //       .from('ali-users')
+  //       .select('id, is_active')
+  //       .eq('id', user.id)
+  //       .single()
+  //
+  //     // If user is not in ali-users, redirect to login
+  //     if (userError || !adminUser) {
+  //       const url = request.nextUrl.clone()
+  //       url.pathname = '/login'
+  //       url.searchParams.set('error', 'not_authorized')
+  //       return NextResponse.redirect(url)
+  //     }
+  //
+  //     // If user is inactive, redirect to login
+  //     if (adminUser && !adminUser.is_active) {
+  //       const url = request.nextUrl.clone()
+  //       url.pathname = '/login'
+  //       url.searchParams.set('error', 'account_inactive')
+  //       return NextResponse.redirect(url)
+  //     }
+  //   } catch (error) {
+  //     // Allow access if table doesn't exist yet
+  //     console.error('Middleware error (allowing access):', error)
+  //   }
+  // }
 
   // Redirect authenticated users away from auth pages
   if (isAuthPage && user) {

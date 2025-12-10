@@ -12,7 +12,7 @@ export function useSettings() {
     const fetchSettings = async () => {
       try {
         const { data, error: fetchError } = await supabase
-          .from("settings")
+          .from("ali-settings")
           .select("*")
           .single()
 

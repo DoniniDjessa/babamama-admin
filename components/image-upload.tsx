@@ -38,13 +38,19 @@ export function ImageUpload({ images, onImagesChange, maxImages = 5 }: ImageUplo
           throw new Error(`${file.name} n'est pas une image`)
         }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} est trop volumineux (max 5MB)`)
+        // Validate file size (max 10MB before compression)
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`${file.name} est trop volumineux (max 10MB)`)
         }
 
-        // Optimize image before upload
+        // Always optimize/compress image before upload
+        // This reduces file size significantly and improves upload speed
         const optimizedFile = await optimizeImageForUpload(file)
+        
+        // Check size after compression (should be much smaller)
+        if (optimizedFile.size > 2 * 1024 * 1024) {
+          console.warn(`Image ${file.name} is still large after compression: ${(optimizedFile.size / 1024 / 1024).toFixed(2)}MB`)
+        }
 
         // Generate unique filename
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.webp`

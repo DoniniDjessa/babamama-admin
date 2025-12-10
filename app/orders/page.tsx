@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sidebar } from "@/components/sidebar"
-import { SidebarToggle } from "@/components/sidebar-toggle"
 
 type Order = {
   id: string
@@ -31,7 +29,6 @@ const STATUS_OPTIONS = [
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const filterStatus = searchParams.get("status") || "all"
@@ -110,23 +107,16 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       <div className="p-4">
         <div className="mx-auto max-w-7xl">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SidebarToggle onClick={() => setSidebarOpen(true)} />
-              <div>
-                <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
-                  Commandes
-                </h1>
-                <p className="text-slate-600 mt-0.5 text-xs">
-                  Gérez toutes les commandes
-                </p>
-              </div>
-            </div>
+          <div className="mb-6">
+            <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
+              Commandes
+            </h1>
+            <p className="text-slate-600 mt-0.5 text-xs">
+              Gérez toutes les commandes
+            </p>
           </div>
 
           {/* Filters */}

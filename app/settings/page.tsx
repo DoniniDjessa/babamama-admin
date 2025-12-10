@@ -10,8 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Sidebar } from "@/components/sidebar"
-import { SidebarToggle } from "@/components/sidebar-toggle"
 
 const settingsSchema = z.object({
   exchange_rate_yuan_xof: z.number().min(1, "Le taux doit être supérieur à 0"),
@@ -29,7 +27,6 @@ export default function SettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const {
     register,
@@ -44,7 +41,7 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
       try {
         const { data, error: fetchError } = await supabase
-          .from("settings")
+          .from("ali-settings")
           .select("*")
           .single()
 
@@ -79,14 +76,14 @@ export default function SettingsPage() {
     try {
       // Check if settings exist
       const { data: existing } = await supabase
-        .from("settings")
+        .from("ali-settings")
         .select("id")
         .single()
 
       if (existing) {
         // Update existing settings
         const { error: updateError } = await supabase
-          .from("settings")
+          .from("ali-settings")
           .update({
             exchange_rate_yuan_xof: data.exchange_rate_yuan_xof,
             shipping_price_per_kg: data.shipping_price_per_kg,
@@ -104,7 +101,7 @@ export default function SettingsPage() {
       } else {
         // Insert new settings
         const { error: insertError } = await supabase
-          .from("settings")
+          .from("ali-settings")
           .insert({
             exchange_rate_yuan_xof: data.exchange_rate_yuan_xof,
             shipping_price_per_kg: data.shipping_price_per_kg,
@@ -138,23 +135,16 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
       <div className="p-4">
         <div className="mx-auto max-w-4xl">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SidebarToggle onClick={() => setSidebarOpen(true)} />
-              <div>
-                <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
-                  Paramètres
-                </h1>
-                <p className="text-slate-600 mt-0.5 text-xs">
-                  Configurez les paramètres globaux de calcul des prix
-                </p>
-              </div>
-            </div>
+          <div className="mb-6">
+            <h1 className="text-xl font-bold font-[var(--font-fira-sans)]">
+              Paramètres
+            </h1>
+            <p className="text-slate-600 mt-0.5 text-xs">
+              Configurez les paramètres globaux de calcul des prix
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)}>
