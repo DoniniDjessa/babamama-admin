@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 type Customer = {
   id: string
@@ -11,11 +13,13 @@ type Customer = {
   email: string | null
   phone: string | null
   created_at: string
+  updated_at: string
 }
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function CustomersPage() {
                         <th className="text-left py-2 px-2 font-semibold">Email</th>
                         <th className="text-left py-2 px-2 font-semibold">Téléphone</th>
                         <th className="text-left py-2 px-2 font-semibold">Date d'inscription</th>
+                        <th className="text-left py-2 px-2 font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -98,6 +103,13 @@ export default function CustomersPage() {
                               month: "2-digit",
                               year: "numeric",
                             })}
+                          </td>
+                          <td className="py-2 px-2">
+                            <Link href={`/customers/${customer.id}`}>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Voir détails
+                              </Button>
+                            </Link>
                           </td>
                         </tr>
                       ))}
